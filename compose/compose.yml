@@ -1,0 +1,50 @@
+networks:
+  my-network:
+    external: true # Use an existing network
+
+services:
+  frontend:
+    image: litmuscube/react-cart:latest
+    container_name: react-cart-container
+    ports:
+      - "80:80"
+    networks:
+      - my-network
+    depends_on:
+      - api-server
+
+  api-server:
+    image: litmuscube/myrestserver:latest
+    container_name: myrestserver-container
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/${MYSQL_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8090:8090"
+    depends_on: # Wait for the db service to be ready before starting the phonebook-sb service
+      - db
+    networks:
+      - my-network
+
+  db:
+    image: litmuscube/mysql-custom:latest
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "13306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - my-network
+
+volumes:
+  mysql-data:
+    external: true # Use an existing volume
+
+# compose up
+# - docker compose --env-file .env up -d 
